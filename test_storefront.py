@@ -84,8 +84,8 @@ def run(port, server, storefront, root, run_browser):
     assert home.count('data-stationery-object=') == len(stationery.GROUPS)
     assert all(storefront.privilege_strip() not in page for page in (art_home, home))
     assert all(storefront.BRAND_LOGO in page and 'Gupta Art and Stationery, home' in page for page in (art_home, home))
-    assert home.index('Featured premium pens') < home.index('Premium pen brands') < home.index('Featured stationery discounts')
-    assert 'stationery-pendant' in home and 'data-category-navigation' in home
+    assert 'Featured stationery discounts' in home and 'data-category-navigation' in home
+    assert 'Premium Kalams' not in home
     assert 'Explore Collection' not in home and 'href="/shop/stationery"' in art_home
     found = json.loads(request(stationery.SEARCH + '?q=kangaro+hd'))['products']
     assert len(found) == 1 and 'HD-10D' in found[0]['name']
@@ -108,10 +108,41 @@ def run(port, server, storefront, root, run_browser):
         assert status == 200
         expected = [p for p in stationery.catalogue() if p['group'] == key]
         assert expected and body.count(b'class="stationery-product"') == len(expected)
-        assert (b'data-pen-gallery' in body) == (key in stationery.FEATURED)
+        assert b'data-pen-gallery' not in body
     for item in stationery.catalogue():
         status, _, body = storefront.storefront_response(stationery.product_image(item), '', unexpected_inventory, base)
         assert status == 200 and body.startswith(b'RIFF') and body[8:12] == b'WEBP'
+
+    kalam_home = request(stationery.KALAM)
+    assert 'data-department="kalam"' in kalam_home and kalam_home.count('class="kalam-tile"') == 2
+    assert 'Brands we provide' in kalam_home and 'maps.app.goo.gl/ohs2bGtUZy9zZHdw7' in kalam_home
+    for department in ('kalam', 'stationery'):
+        for view in ('cart', 'wishlist'):
+            saved_page = request(f'/shop/{view}?department={department}')
+            assert f'data-department="{department}"' in saved_page
+            assert f'data-browse-url="/shop/{department}"' in saved_page
+    for key in stationery.COLLECTIONS:
+        path = stationery.group_url(key)
+        assert f'href="{path}"' in kalam_home
+        status, headers, _ = storefront.storefront_response(
+            f'{stationery.STATIONERY}/{key}', '', unexpected_inventory, base)
+        assert status == 308 and dict(headers)['Location'] == path
+        content = request(path)
+        assert 'data-pen-gallery' in content and content.count('class="stationery-product"') == 17
+        assert 'button outline kalam-back' in content and 'class="kalam-lamp"' not in content
+    assert 'Representative portrait' in request(stationery.group_url('grandfathers-collection'))
+    kalam_ids = ','.join('stationery:' + p['id'] for p in stationery.kalams())
+    status, _, body = storefront.storefront_response(
+        '/api/storefront/products', urlencode({'ids': kalam_ids}), unexpected_inventory, base)
+    items = json.loads(body)['products']
+    assert status == 200 and len(items) == len({p['id'] for p in items}) == 34
+    for product in items:
+        assert product['demo_stationery'] and product['url'].startswith(stationery.KALAM)
+        assert product['name'] in request(product['url'])
+        assert storefront.storefront_response(product['image'], '', unexpected_inventory, base)[0] == 200
+    assert sum(product['image'].endswith('.svg') for product in items) == 24
+    assert json.loads(request(stationery.KALAM_SEARCH + '?q=obsidian'))['products'][0]['id'] == 'kalam-obsidian-gold'
+    assert not json.loads(request(stationery.SEARCH + '?q=obsidian'))['products']
 
     request('/api/setup', {'email':'storefront-test@example.test', 'password':'isolated-fixture-password'}, opener=owner)
     first = {'name':'QA Studio Palette', 'sku':'QA-PALETTE', 'category':'Accessories', 'price':123.45,

@@ -1,11 +1,48 @@
 (() => {
-  const root = '/shop/stationery';
+  const kalam = document.body.dataset.department === 'kalam';
+  const root = kalam ? '/shop/kalam' : '/shop/stationery';
+  if (kalam) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    const handoff = 'gupta:kalam-zoom';
+    document.addEventListener('click', event => {
+      if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const link = event.target.closest('.kalam-tile, .kalam-back');
+      const display = link?.matches('.kalam-back') ? document.querySelector('.kalam-collection-photo .kalam-display') :
+        link?.querySelector('.kalam-display');
+      if (!display) return;
+      const {x, y, width, height} = display.getBoundingClientRect();
+      if (y + height < 0 || y >= innerHeight || !width || !height) return;
+      try {
+        sessionStorage.setItem(handoff, JSON.stringify({
+          group: display.dataset.kalamDisplay, path: link.pathname, x, y, width, height, time: Date.now()
+        }));
+      } catch { /* The collection link still works without storage. */ }
+    });
+    try {
+      const start = JSON.parse(sessionStorage.getItem(handoff));
+      sessionStorage.removeItem(handoff);
+      const display = [...document.querySelectorAll('.kalam-display')]
+        .find(item => item.dataset.kalamDisplay === start?.group);
+      if (display && start.path === location.pathname && Date.now() - start.time < 3500) {
+        if (reduced.matches) {
+          display.animate([{opacity: .65}, {opacity: 1}], {duration: 90});
+        } else {
+          const end = display.getBoundingClientRect();
+          display.animate([
+            {transform: 'translate(' + (start.x - end.x) + 'px,' + (start.y - end.y) + 'px) scale(' +
+              start.width / end.width + ',' + start.height / end.height + ')', transformOrigin: 'top left'},
+            {transform: 'none', transformOrigin: 'top left'}
+          ], {id: 'kalam-scene-zoom', duration: 660, easing: 'cubic-bezier(.22,.78,.24,1)'});
+        }
+      }
+    } catch { /* A direct link or restored tab renders the scene normally. */ }
+  }
   const back = document.querySelector('[data-stationery-product-back]');
   if (back && document.referrer && history.length > 1) {
     const previous = new URL(document.referrer);
     const previousView = previous.pathname === '/shop/cart' ? 'cart' : previous.pathname === '/shop/wishlist' ? 'wishlist' :
       (previous.pathname === root || previous.pathname.startsWith(root + '/')) &&
-        !previous.pathname.startsWith(root + '/product/') ? 'stationery' : '';
+        !previous.pathname.startsWith(root + '/product/') ? (kalam ? 'Kalam' : 'stationery') : '';
     if (previous.origin === location.origin && previousView) {
       back.href = previous.href;
       back.textContent = `← Back to ${previousView}`;
@@ -29,17 +66,6 @@
     for (const layer of hero.querySelectorAll('[data-lift]')) {
       layer.classList.toggle('is-active', active?.dataset.stationeryObject === layer.dataset.lift);
     }
-    const lamp = hero.querySelector('.stationery-pendant');
-    const x = active?.dataset.lampX;
-    if (x) {
-      if (!lamp.classList.contains('is-lit')) {
-        lamp.style.transition = 'none';
-        lamp.style.setProperty('--lamp-x', `${x}px`);
-        lamp.getBoundingClientRect();
-        lamp.style.removeProperty('transition');
-      } else lamp.style.setProperty('--lamp-x', `${x}px`);
-    }
-    lamp.classList.toggle('is-lit', Boolean(x));
   }
 
   for (const event of ['pointerover', 'pointerout', 'focusin', 'focusout']) {
@@ -102,7 +128,7 @@
 
   hero.addEventListener('click', event => {
     const link = event.target.closest('[data-stationery-object], [data-stationery-back]');
-    if (!link || link.hasAttribute('data-full-navigation') || !desktop.matches || event.button !== 0 || event.altKey || event.ctrlKey ||
+    if (!link || !desktop.matches || event.button !== 0 || event.altKey || event.ctrlKey ||
         event.metaKey || event.shiftKey) return;
     event.preventDefault();
     openScene(link.href, link.dataset.stationeryObject || '', true);

@@ -7,8 +7,11 @@ import re
 from urllib.parse import urlencode
 
 STATIONERY = '/shop/stationery'
+KALAM = '/shop/kalam'
 ASSETS = '/storefront/stationery'
+KALAM_ASSETS = '/storefront/kalam'
 SEARCH = '/api/storefront/stationery-search'
+KALAM_SEARCH = '/api/storefront/kalam-search'
 GROUPS = {
     'writing-marking': ('Writing & Marking', 'Pens, pencils, markers and highlighters for the things you write every day.'),
     'paper-planning': ('Paper & Planning', 'Notebooks, planners and paper goods for ideas, notes and dates.'),
@@ -16,10 +19,11 @@ GROUPS = {
     'files-desk-organization': ('Files & Desk Organization', 'Give paperwork and desk essentials a place of their own.'),
     'adhesives-office-supplies': ('Adhesives & Office Supplies', 'Glues, tapes and everyday supplies to keep the work moving.'),
     'school-geometry': ('School & Geometry', 'Measuring tools and classroom essentials.'),
-    'premium-pens': ('Premium Pens', 'Writing instruments with distinctive finishes, nibs and materials.'),
-    'grandfathers-collection': ('Grandfather’s Collection', 'A preview assortment of classic writing pieces. The final selection is coming later.'),
 }
-FEATURED = {'premium-pens', 'grandfathers-collection'}
+COLLECTIONS = {
+    'premium-pens': ('Premium Kalams', 'Contemporary fountain pens with distinctive finishes and nibs.'),
+    'grandfathers-collection': ('Grandfather’s Collection', 'A demo selection inspired by pens worth passing down.'),
+}
 BRANDS = (('LAMY', 'lamy.svg'), ('Penlux', 'penlux.png'), ('YSTUDIO', 'ystudio.png'),
           ('Waterman', 'waterman.svg'), ('Pelikan', 'pelikan.svg'), ('Platinum', 'platinum.svg'))
 CART_ID = r'stationery:[a-z0-9-]{1,120}'
@@ -43,12 +47,31 @@ def catalogue():
     return json.loads(file.read_text(encoding='utf-8'))
 
 
+@lru_cache(maxsize=1)
+def kalams():
+    file = Path(__file__).resolve().parent / 'reference' / 'kalam-demo.json'
+    return json.loads(file.read_text(encoding='utf-8')) + [p for p in catalogue() if p['group'] in COLLECTIONS]
+
+
+def is_kalam(path):
+    return path == KALAM or path.startswith(KALAM + '/')
+
+
+@lru_cache(maxsize=1)
+def kalam_signature():
+    file = Path(__file__).resolve().parent / 'public/storefront/kalam/signature.svg'
+    return '<span class="sr-only">Kalam</span>' + file.read_text(encoding='utf-8')
+
+
 def product_url(p):
-    return f'{STATIONERY}/product/{p["id"]}'
+    root = KALAM if p['group'] in COLLECTIONS else STATIONERY
+    return f'{root}/product/{p["id"]}'
 
 
 def product_image(p):
-    return f'{ASSETS}/products/{p["id"]}.webp'
+    root = KALAM_ASSETS if p.get('concept') else ASSETS
+    extension = 'svg' if p.get('concept') else 'webp'
+    return f'{root}/products/{p["id"]}.{extension}'
 
 
 def public_product(p):
@@ -60,40 +83,44 @@ def public_product(p):
 
 
 def saved_products(ids):
-    return [item for item in map(public_product, catalogue()) if item['id'] in ids]
+    products = [p for p in catalogue() if p['group'] in GROUPS] + kalams()
+    return [item for item in map(public_product, products) if item['id'] in ids]
 
 
 def search_products(query, products=None):
     tokens = set(re.findall(r'[^\W_]+', query.casefold()))
-    products = catalogue() if products is None else products
+    products = [p for p in catalogue() if p['group'] in GROUPS] if products is None else products
     if not tokens:
         return products
     matches = []
     for p in products:
         title = re.findall(r'[^\W_]+', p['name'].casefold())
-        facets = re.findall(r'[^\W_]+', (p['type'] + ' ' + GROUPS[p['group']][0]).casefold())
+        group = (GROUPS.get(p['group']) or COLLECTIONS[p['group']])[0]
+        facets = re.findall(r'[^\W_]+', (p['type'] + ' ' + group).casefold())
         if all(any(term.startswith(token) for term in title + facets) for token in tokens):
             score = sum(any(term.startswith(token) for term in title) for token in tokens)
             matches.append((score, p))
     return [p for _, p in sorted(matches, key=lambda match: match[0], reverse=True)]
 
 
-def suggestions(query):
+def suggestions(query, *, kalam=False):
     return {'products': [
         {'id': p['id'], 'name': p['name'], 'image': product_image(p), 'url': product_url(p)}
-        for p in search_products(query)[:8]
+        for p in search_products(query, kalams() if kalam else None)[:8]
     ] if query.strip() else []}
 
 
 def group_url(group):
-    return f'{STATIONERY}/{group}'
+    return f'{KALAM if group in COLLECTIONS else STATIONERY}/{group}'
 
 
-def nav_links(path):
+def nav_links(path, *, kalam=False):
     def link(url, label):
         current = ' aria-current="page"' if path.rstrip('/') == url else ''
         return f'<a href="{escape(url)}"{current}>{escape(label)}</a>'
 
+    if kalam:
+        return ''.join([link(KALAM, 'Kalam studio'), *(link(group_url(key), label) for key, (label, _) in COLLECTIONS.items())])
     links = [link(STATIONERY + '/catalogue', 'All stationery')]
     for key, (label, _) in GROUPS.items():
         url = group_url(key)
@@ -134,49 +161,29 @@ def hero(group):
             '<p>Everyday essentials and pieces worth passing down.</p>')
     for index, (key, (name, _)) in enumerate(GROUPS.items()):
         x, _, points = DISPLAYS[index]
-        featured = key in FEATURED
-        spot = (f'<ellipse class="stationery-pen-light" cx="{x}" cy="554" rx="111" ry="105" '
-                f'clip-path="url(#stationery-cut-{key})"/>') if featured else ''
-        target = x / 1672 * 100
+        target = x / 1187 * 100
         side = 'left' if target < 50 else 'right'
         pan = max(-70, min(70, (25 if side == 'left' else 75) - (50 + (target - 50) * 2.4)))
         scene.append(f'<clipPath id="stationery-cut-{key}"><polygon points="{points}"/></clipPath>'
                      f'<g class="stationery-lift" data-lift="{key}">'
                      f'<g class="stationery-cutout" style="transform-origin:{x}px 555px">'
-                     f'<use href="#stationery-photo" clip-path="url(#stationery-cut-{key})"/>{spot}</g>'
+                     f'<use href="#stationery-photo" clip-path="url(#stationery-cut-{key})"/></g>'
                      f'{base_glow(index)}</g>')
-        full = f' data-full-navigation data-lamp-x="{x}"' if featured else ''
-        objects.append(f'<a href="{group_url(key)}" class="stationery-object" data-stationery-object="{key}"{full} '
+        objects.append(f'<a href="{group_url(key)}" class="stationery-object" data-stationery-object="{key}" '
                        f'data-pan="{pan:.2f}%" data-side="{side}" '
                        f'style="--item-x:{target:.2f}%">{thumbnail(index)}<span>{escape(name)}</span></a>')
         if key == group:
             attrs = f'data-side="{side}" style="--camera-pan:{pan:.2f}%"'
-            label = 'Featured collection' if group in FEATURED else 'Stationery'
             copy = (f'<a class="button outline stationery-back" data-stationery-back href="{STATIONERY}">← All stationery</a>'
-                    f'<p class="stationery-kicker">{label}</p><h1>{escape(name)}</h1>'
+                    f'<p class="stationery-kicker">Stationery</p><h1>{escape(name)}</h1>'
                     f'<p>{escape(GROUPS[key][1])}</p>')
             selected = thumbnail(index)
     return f'''
 <section class="stationery-hero" data-stationery-hero data-group="{group}" {attrs} aria-label="Stationery displays">
   <div class="stationery-camera">
-    <svg class="stationery-scene" viewBox="0 80 1672 790" aria-hidden="true">
-      <defs>
-        <linearGradient id="stationery-beam" x2="0" y2="1" gradientUnits="objectBoundingBox">
-          <stop stop-color="#fff0cf" stop-opacity=".34"/><stop offset=".73" stop-color="#ffdb9b" stop-opacity=".14"/>
-          <stop offset="1" stop-color="#ffdb9b" stop-opacity="0"/>
-        </linearGradient>
-        <radialGradient id="stationery-reflection"><stop stop-color="#ffe6b8" stop-opacity=".32"/>
-          <stop offset="1" stop-color="#ffe6b8" stop-opacity="0"/></radialGradient>
-      </defs>
+    <svg class="stationery-scene" viewBox="0 190 1187 560" aria-hidden="true">
       <image id="stationery-photo" href="{ASSETS}/shop-unlit.webp" width="1672" height="941"/>
       {''.join(scene)}
-      <g class="stationery-pendant" aria-hidden="true">
-        <g class="stationery-pendant-travel">
-          <path class="stationery-pendant-beam" d="M-52 388H52L122 653H-122Z"/>
-          <path d="M0 72V258" stroke="#3e2c1b" stroke-width="6"/>
-          <image href="{ASSETS}/pendant.webp" x="-77" y="249" width="154" height="154"/>
-        </g>
-      </g>
     </svg>
   </div>
   <div class="stationery-copy">{copy}</div>
@@ -216,15 +223,16 @@ def card(p, price, save_button):
 </article>'''
 
 
-def listing(price, save_button, group='', query='', kind=''):
-    products = [p for p in catalogue() if not group or p['group'] == group]
+def listing(price, save_button, group='', query='', kind='', *, kalam=False):
+    products = [p for p in (kalams() if kalam else catalogue())
+                if (kalam or p['group'] in GROUPS) and (not group or p['group'] == group)]
     types = sorted({p['type'] for p in products})
     if kind:
         products = [p for p in products if p['type'] == kind]
     products = search_products(query, products)
     heading = (f'Results for “{query}”' if query else kind or
-               ('In this collection' if group else 'Browse stationery'))
-    path = group_url(group) if group else STATIONERY + '/catalogue'
+               ('In this collection' if group else 'Browse Kalam' if kalam else 'Browse stationery'))
+    path = group_url(group) if group else (KALAM if kalam else STATIONERY) + '/catalogue'
     filters = ''
     if group and len(types) > 1:
         links = []
@@ -233,7 +241,7 @@ def listing(price, save_button, group='', query='', kind=''):
             current = ' aria-current="true"' if name == kind else ''
             links.append(f'<a href="{escape(href)}"{current}>{escape(name or "All types")}</a>')
         filters = '<nav class="stationery-filters" aria-label="Product types">' + ''.join(links) + '</nav>'
-    items = ''.join(card(p, price, save_button) for p in products) or '<p>No matching stationery. Try another search or category.</p>'
+    items = ''.join(card(p, price, save_button) for p in products) or '<p>No matching products. Try another search.</p>'
     return f'''
 <section class="wrap stationery-catalogue" id="stationery-products">
   <div class="stationery-section-title">
@@ -246,113 +254,152 @@ def listing(price, save_button, group='', query='', kind=''):
 
 
 def home_sections(price, save_button, membership):
-    premium = []
-    for brand, _ in BRANDS:
-        pen = next((p for p in catalogue() if p['group'] == 'premium-pens' and
-                    p['name'].lower().startswith(brand.lower())), None)
-        if pen:
-            premium.append(pen)
-    deals = sorted((p for p in catalogue() if p['group'] not in FEATURED),
+    deals = sorted((p for p in catalogue() if p['group'] in GROUPS),
                    key=lambda p: public_product(p)['discount'], reverse=True)[:4]
-    logos = ''.join(f'<a href="{STATIONERY}/catalogue?{urlencode({"q": name})}">'
-                    f'<img src="{ASSETS}/{asset}" alt="{name}" loading="lazy" decoding="async"></a>'
-                    for name, asset in BRANDS)
-
-    def grid(products):
-        return '<div class="stationery-products">' + ''.join(card(p, price, save_button) for p in products) + '</div>'
-
     return f'''
 <div id="stationery-products">
   {membership}
-  <section class="wrap stationery-catalogue stationery-home-premium" aria-labelledby="featured-pens-heading">
-    <div class="stationery-section-title"><h2 id="featured-pens-heading">Featured premium pens</h2>
-      <a class="button outline" href="{group_url('premium-pens')}">View collection</a></div>
-    {grid(premium)}
-  </section>
-  <section class="stationery-brands" aria-labelledby="pen-brands-heading">
-    <div class="wrap"><h2 id="pen-brands-heading">Premium pen brands</h2><div class="stationery-brand-logos">{logos}</div></div>
-  </section>
   <section class="wrap stationery-catalogue" aria-labelledby="stationery-deals-heading">
     <div class="stationery-section-title"><h2 id="stationery-deals-heading">Featured stationery discounts</h2>
       <a class="button outline" href="{STATIONERY}/catalogue">Browse stationery</a></div>
-    {grid(deals)}
+    <div class="stationery-products">{''.join(card(p, price, save_button) for p in deals)}</div>
   </section>
 </div>'''
 
 
 def pen_gallery(group, price, save_button, kind):
+    products = [p for p in kalams() if p['group'] == group]
     items = []
-    for p in catalogue():
-        if p['group'] != group:
-            continue
+    for p in products:
         product = public_product(p)
+        views = p.get('rail') or [{'src': product['image'], 'label': 'Full pen',
+                                  'clip': 'none', 'transform': 'none', **p.get('shelf', {})}]
+        if p.get('concept'):
+            views = [*views, {'src': product['image'].replace('.svg', '-nib.svg'),
+                              'label': 'Nib detail', 'clip': 'none', 'transform': 'none'}]
         items.append({
-            **product, 'description': p['description'], 'type': p['type'], 'onRail': 'rail' in p,
-            'views': p.get('rail') or [{'src': product['image'], 'label': 'Front',
-                                       'clip': 'none', 'transform': 'none', **p.get('shelf', {})}],
+            **product, 'description': p['description'], 'type': p['type'],
+            'onRail': len(items) < 3, 'views': views,
             'saleLabel': price(p['price']), 'originalLabel': price(p['mrp']),
         })
-    title = GROUPS[group][0]
+    title = COLLECTIONS[group][0]
     data = json.dumps({'title': title, 'items': items, 'kind': kind}, ensure_ascii=False).replace('<', r'\u003c')
-    fallback = listing(price, save_button, group, kind=kind).replace('<p class="stationery-kicker">Demo catalogue</p>', '')
-    return (f'<div data-pen-gallery><section class="pen-gallery"><h1>{escape(title)}</h1></section>{fallback}</div>'
+    fallback = listing(price, save_button, group, kind=kind, kalam=True)
+    return (f'<div data-pen-gallery>{fallback}</div>'
             f'<script type="application/json" id="pen-gallery-data">{data}</script>'
             '<script type="module" src="/storefront/vendor/pen-gallery.js"></script>')
 
 
-def page(path, params, price, save_button, membership):
-    suffix = path.removeprefix(STATIONERY).strip('/')
-    if not suffix:
-        return 200, 'Stationery', hero('') + home_sections(price, save_button, membership)
-    if suffix in GROUPS:
-        kind = params.get('type', [''])[0][:60]
-        content = (pen_gallery(suffix, price, save_button, kind) if suffix in FEATURED
-                   else hero(suffix) + listing(price, save_button, suffix, kind=kind))
-        if suffix == 'grandfathers-collection':
-            content += '''
+def grandfather_story():
+    return '''
 <section class="grandfather-story" aria-labelledby="grandfather-story-heading">
   <div class="wrap grandfather-story-inner">
     <figure class="grandfather-story-portrait">
       <span class="grandfather-story-portrait-note">Representative portrait</span>
-      <img src="https://images.pexels.com/photos/940007/pexels-photo-940007.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1260"
-           alt="Black-and-white portrait of an elderly man reading; a representative image, not a verified photograph of Gupta’s founder."
-           loading="lazy" decoding="async" referrerpolicy="no-referrer" width="756" height="1008">
+      <img src="/storefront/kalam/representative-portrait.webp"
+           alt="Illustrative black-and-white portrait of an elderly bookseller reading."
+           loading="lazy" decoding="async" width="760" height="950">
     </figure>
     <div class="grandfather-story-copy">
-      <p class="stationery-kicker">A family story in books and writing · Since 1916</p>
-      <h2 id="grandfather-story-heading">A legacy, carried forward.</h2>
+      <h2 id="grandfather-story-heading">Gupta since 1916</h2>
       <p>Gupta Brothers Books was established in 1916 by Mr. V.J. Gupta. It has grown from humble beginnings and has now become a household name for books. Taken over by the children of Mr. V.J. Gupta, Gupta Brothers Books have opened up three branches that are strategically located in various parts of the city, in order to cater to the burgeoning requirements of students, teachers, academicians and connoisseurs of literature.</p>
       <p>There are many who just drop by to spend a few hours in the shop, just to browse around. Culture and tradition continue to be the hallmark of Gupta Brothers Books. Gupta Brothers Books has always been more than just a book shop. Many distinguished writers including Manepalli Ramachandra Sastry, Cetti Laksminarasimham and others…</p>
     </div>
   </div>
 </section>'''
-        return 200, GROUPS[suffix][0], content
+
+
+def kalam_display(key, *, lamp=False):
+    lighting = (f'<span class="kalam-light"></span>'
+                f'<img class="kalam-lamp" src="{ASSETS}/pendant.webp" alt="" width="480" height="480">') if lamp else ''
+    return f'''<span class="kalam-display" data-kalam-display="{key}" aria-hidden="true">
+      <img class="kalam-scene" src="{KALAM_ASSETS}/{key}.webp" alt="" width="887" height="887" fetchpriority="high">
+      {lighting}
+    </span>'''
+
+
+def kalam_hero(group):
+    if group:
+        title, description = COLLECTIONS[group]
+        return f'''<section class="kalam-collection-hero wrap" data-kalam-group="{group}">
+  <div class="kalam-collection-copy">
+    <a class="button outline kalam-back" href="{KALAM}">← Back to Kalam</a>
+    <h1>{escape(title)}</h1>
+    <p>{escape(description)}</p>
+    <a class="button kalam-action" href="#stationery-products">Browse pens</a>
+  </div>
+  <div class="kalam-collection-photo">{kalam_display(group)}</div>
+</section>'''
+    panels = ''.join(
+        f'<a class="kalam-tile" href="{group_url(key)}">{kalam_display(key, lamp=True)}'
+        f'<span class="kalam-tile-title">{escape(title)}<span aria-hidden="true">↗</span></span></a>'
+        for key, (title, _) in COLLECTIONS.items())
+    return f'''<section class="kalam-landing wrap" data-kalam-landing>
+  <h1>{kalam_signature()}</h1>
+  <nav class="kalam-panels" aria-label="Kalam collections">{panels}</nav>
+</section>'''
+
+
+def legacy_kalam_path(path):
+    if not path.startswith(STATIONERY + '/'):
+        return None
+    suffix = path.removeprefix(STATIONERY + '/').rstrip('/')
+    if suffix in COLLECTIONS or (suffix.startswith('product/') and any(
+            suffix == 'product/' + p['id'] for p in kalams())):
+        return f'{KALAM}/{suffix}'
+    return None
+
+
+def page(path, params, price, save_button, membership):
+    kalam = is_kalam(path)
+    root = KALAM if kalam else STATIONERY
+    name = 'Kalam' if kalam else 'Stationery'
+    groups = COLLECTIONS if kalam else GROUPS
+    suffix = path.removeprefix(root).strip('/')
+    if not suffix:
+        if not kalam:
+            return 200, name, hero('') + home_sections(price, save_button, membership)
+        logos = ''.join(f'<a href="{KALAM}/catalogue?{urlencode({"q": brand})}">'
+                        f'<img src="{ASSETS}/{asset}" alt="{brand}" loading="lazy" decoding="async"></a>'
+                        for brand, asset in BRANDS)
+        return 200, name, (kalam_hero('') + '<section class="kalam-brands wrap">'
+                           '<h2>Brands we provide</h2><div class="stationery-brand-logos">' + logos + '</div></section>')
+    if suffix in groups:
+        kind = params.get('type', [''])[0][:60]
+        if kalam:
+            content = kalam_hero(suffix) + pen_gallery(suffix, price, save_button, kind)
+            if suffix == 'grandfathers-collection':
+                content += grandfather_story()
+        else:
+            content = hero(suffix) + listing(price, save_button, suffix, kind=kind)
+        return 200, groups[suffix][0], content
     if suffix == 'catalogue':
         query = params.get('q', [''])[0].strip()[:100]
-        return 200, 'Stationery catalogue', ('<div class="wrap stationery-catalogue-top">'
-                                             f'<a class="button outline" href="{STATIONERY}">← All stationery</a><h1>Stationery catalogue</h1></div>'
-                                             + listing(price, save_button, query=query))
+        return 200, f'{name} catalogue', ('<div class="wrap stationery-catalogue-top">'
+                                         f'<a class="button outline" href="{root}">← Back to {name}</a><h1>{name} catalogue</h1></div>'
+                                         + listing(price, save_button, query=query, kalam=kalam))
     product_id = suffix.removeprefix('product/')
-    if suffix.startswith('product/') and (p := next((p for p in catalogue() if p['id'] == product_id), None)):
-        name, group, item = escape(p['name']), p['group'], public_product(p)
+    if suffix.startswith('product/') and (p := next((p for p in (kalams() if kalam else catalogue())
+                                                      if p['id'] == product_id and p['group'] in groups), None)):
+        title, group, item = escape(p['name']), p['group'], public_product(p)
         front = p['rail'][0].get('detailSrc') if p.get('rail') else None
         resolution = f' srcset="{escape(front)}"' if front else ''
         return 200, p['name'], f'''
 <section class="wrap stationery-detail">
-  <a class="button outline stationery-product-back" data-stationery-product-back href="{group_url(group)}#stationery-products">← Back to {escape(GROUPS[group][0])}</a>
-  <nav class="stationery-trail" aria-label="Breadcrumb"><a href="{STATIONERY}">Stationery</a>
-    <span aria-hidden="true">/</span><a href="{group_url(group)}">{escape(GROUPS[group][0])}</a></nav>
+  <a class="button outline stationery-product-back" data-stationery-product-back href="{group_url(group)}#stationery-products">← Back to {escape(groups[group][0])}</a>
+  <nav class="stationery-trail" aria-label="Breadcrumb"><a href="{root}">{name}</a>
+    <span aria-hidden="true">/</span><a href="{group_url(group)}">{escape(groups[group][0])}</a></nav>
   <div class="stationery-detail-grid">
     <div class="stationery-detail-image">
-      <img src="{product_image(p)}"{resolution} alt="{name}" width="560" height="560" data-product-image>
+      <img src="{product_image(p)}"{resolution} alt="{title}" width="560" height="560" data-product-image>
       {discount_flag(item)}{save_button(item)}
     </div>
-    <div><p class="stationery-kicker">{escape(p['type'])} · Demo catalogue</p><h1>{name}</h1>
+    <div><p class="stationery-kicker">{escape(p['type'])} · Demo catalogue</p><h1>{title}</h1>
       <p>{escape(p['description'])}</p>
       {prices(item, price)}
       <div class="stationery-detail-actions">{add_button(item)}</div>
     </div>
   </div>
 </section>'''
-    return 404, 'Stationery page not found', (f'<section class="wrap page"><h1>Stationery page not found</h1>'
-                                            f'<a class="button outline" href="{STATIONERY}">← All stationery</a></section>')
+    return 404, f'{name} page not found', (f'<section class="wrap page"><h1>{name} page not found</h1>'
+                                         f'<a class="button outline" href="{root}">← Back to {name}</a></section>')

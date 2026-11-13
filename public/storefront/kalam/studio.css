@@ -1,0 +1,139 @@
+[data-department="kalam"] {
+  --color-canvas: #161514;
+  --color-surface: #211f1d;
+  --color-muted: #2c2824;
+  --color-ink: #faf0df;
+  --color-secondary: #cbbfb0;
+  --color-secondary-on-muted: #e0d2c0;
+  --color-line: #4b433a;
+  --color-control-line: #9b8974;
+  --color-focus: #f3ca89;
+  --kalam-gold: #edca90;
+  --kalam-ease: cubic-bezier(.22,.78,.24,1);
+  color-scheme: dark;
+}
+[data-department="kalam"] .department-header { background: #161514; }
+[data-department="kalam"] .stationery-nav a[aria-current] { color: var(--kalam-gold); }
+[data-department="kalam"] .department-categories .category-nav { min-height: 40px; }
+[data-department="kalam"] .global-search input { border-color: var(--color-control-line); }
+[data-department="kalam"] :is(.button, .save, .back-to-top):focus-visible { outline-color: var(--color-focus); }
+
+.kalam-landing { padding-block: clamp(18px, 4svh, 42px) clamp(32px, 6vw, 84px); }
+.kalam-landing h1 {
+  width: clamp(168px, 43svh, 370px);
+  margin: 0 auto clamp(14px, 2.8svh, 30px);
+}
+.kalam-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(8px, 1.6vw, 22px); }
+.kalam-tile {
+  display: grid; grid-template-rows: max-content 1fr;
+  text-decoration: none; background: #100f0e; border: 1px solid var(--color-line);
+  border-radius: 9px; overflow: clip; transition: border-color 260ms ease;
+}
+.kalam-tile:hover, .kalam-tile:focus-visible { border-color: #a58b61; }
+.kalam-tile-title {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: clamp(10px, 1.5vw, 20px);
+  font: 600 clamp(22px, 3.4vw, 50px)/1 "Cormorant Garamond", Georgia, serif;
+}
+.kalam-tile-title span { font: 400 clamp(12px, 1.5vw, 20px)/1 var(--font-body); color: var(--kalam-gold); }
+.kalam-display { position: relative; isolation: isolate; display: block; overflow: clip; aspect-ratio: 1.75; background: #100f0e; }
+.kalam-scene {
+  height: 100%; object-fit: cover; object-position: 50% 62%;
+}
+.kalam-light {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background:
+    radial-gradient(ellipse 29% 24% at 48% 63%, #ffcf8952, transparent),
+    conic-gradient(from 149deg at 48% 19%, transparent 0deg, #ffdeb52b 13deg, #fff0d130 36deg, transparent 62deg);
+  mask-image: linear-gradient(transparent 14%, #000 31%, #000 46%, transparent 90%);
+  mix-blend-mode: screen;
+  transition: opacity 360ms ease;
+}
+.kalam-lamp {
+  position: absolute; top: -7%; left: 48%; width: clamp(57px, 11%, 92px);
+  opacity: 0; transform: translate(-50%, -65%) rotate(-8deg); pointer-events: none;
+  transition: transform 560ms var(--kalam-ease), opacity 300ms ease;
+}
+.kalam-tile:focus-visible .kalam-lamp { opacity: 1; transform: translate(-50%, 0); }
+.kalam-tile:focus-visible .kalam-light { opacity: 1; transition-delay: 110ms; }
+.kalam-tile:active .kalam-lamp { opacity: 1; transform: translate(-50%, 0); }
+.kalam-tile:active .kalam-light { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .kalam-tile:hover .kalam-lamp { opacity: 1; transform: translate(-50%, 0); }
+  .kalam-tile:hover .kalam-light { opacity: 1; transition-delay: 110ms; }
+}
+.kalam-display:has(.kalam-scene) { z-index: 1; }
+.kalam-tile, .kalam-collection-photo { overflow: visible; }
+.kalam-display { border-radius: 8px 8px 0 0; }
+.kalam-collection-photo .kalam-display { border-radius: 8px; }
+@media (min-width: 681px) and (max-height: 820px) {
+  .kalam-tile .kalam-display { max-height: 44svh; }
+}
+
+.kalam-collection-hero {
+  display: grid; grid-template-columns: minmax(220px, .64fr) minmax(0, 1.5fr);
+  align-items: center; gap: clamp(22px, 4vw, 64px); padding-block: clamp(20px, 4vw, 56px);
+}
+.kalam-collection-copy h1, [data-department="kalam"] .grandfather-story h2 {
+  font: 600 clamp(43px, 5.7vw, 91px)/.94 "Cormorant Garamond", Georgia, serif;
+  text-wrap: initial;
+}
+.kalam-collection-copy p { margin-top: 13px; color: var(--color-secondary); max-width: 38ch; }
+.kalam-collection-copy { container-type: inline-size; }
+[data-kalam-group="grandfathers-collection"] h1 {
+  font-size: min(17.8cqi, 76px); line-height: .99; overflow-wrap: normal; text-wrap: balance;
+}
+.kalam-back.button.outline { color: var(--kalam-gold); border-color: #a48a63; margin-bottom: 16px; }
+.kalam-back.button.outline:hover { color: #211a11; background: var(--kalam-gold); }
+.kalam-collection-photo { border: 1px solid var(--color-line); border-radius: 9px; overflow: clip; }
+.kalam-action { margin-top: 20px; }
+[data-department="kalam"] :is(.kalam-action, .stationery-add .button) {
+  background: var(--kalam-gold); color: #211a11; border-color: var(--kalam-gold);
+}
+[data-department="kalam"] :is(.kalam-action, .stationery-add .button):hover { background: #ffdfac; }
+.kalam-brands { border-top: 1px solid var(--color-line); padding-block: clamp(26px, 5vw, 72px); text-align: center; }
+.kalam-brands .stationery-brand-logos { margin-top: 22px; }
+.kalam-brands .stationery-brand-logos a { background: #eae1d5; }
+
+[data-department="kalam"] .pen-gallery { padding-top: 32px; }
+[data-department="kalam"] .pen-rail { --pen-size: clamp(100px, 24vw, 285px); }
+[data-department="kalam"] .pen-rail-lamp { top: -37px; }
+[data-department="kalam"] .pen-rail-item:focus-visible::before { opacity: 1; }
+[data-department="kalam"] .pen-rail-item:focus-visible .pen-rail-lamp { opacity: 1; transform: none; }
+[data-department="kalam"] .pen-gallery-details { margin-top: 13px; }
+[data-department="kalam"] .pen-shelf { background: #1b1917; }
+[data-department="kalam"] .pen-shelf-row::before {
+  background: linear-gradient(#4a4137, #35302a 38%, #201d19 41%, #161413);
+  box-shadow: 0 12px 25px #0807079e;
+}
+[data-department="kalam"] .pen-inspector,
+[data-department="kalam"] .pen-inspector-copy { color: var(--color-ink); background: #27231f; }
+[data-department="kalam"] .pen-collection-name { color: var(--kalam-gold); }
+[data-department="kalam"] .pen-quantity input { background: #1b1917; }
+[data-department="kalam"] .pen-shelf-figure:has(img[src*="/kalam/products/"]) { bottom: -15%; }
+[data-department="kalam"] .pen-photo img[src*="/kalam/products/"] { mix-blend-mode: normal; }
+[data-department="kalam"] .pen-shelf-preview:has(img[src$="/retro-fountain-pen-m-nib.webp"]) {
+  background: #000;
+  border-radius: 8px;
+}
+[data-department="kalam"] :is(.stationery-product, .stationery-detail-grid) img[src*="/kalam/products/"] {
+  background: radial-gradient(ellipse, #48433c, #282522);
+}
+[data-department="kalam"] .grandfather-story { background: #201b17; color: var(--color-ink); }
+[data-department="kalam"] .grandfather-story-copy > p { color: var(--color-secondary); }
+
+@media (max-width: 850px) {
+  [data-department="kalam"] .stationery-nav { gap: clamp(14px, 3vw, 26px); }
+  .kalam-collection-hero { grid-template-columns: minmax(170px, .8fr) minmax(0, 1.2fr); }
+}
+@media (max-width: 680px) {
+  .kalam-collection-hero { grid-template-columns: 1fr; }
+  .kalam-display { aspect-ratio: 1.12; }
+  .kalam-collection-photo .kalam-display { aspect-ratio: 1.48; }
+  .kalam-tile-title { align-items: flex-start; }
+  [data-department="kalam"] .pen-rail { --pen-size: min(69vw, 280px); }
+  [data-department="kalam"] .pen-shelf-preview { border-bottom-color: #4a4137; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kalam-tile, .kalam-lamp, .kalam-light { transition: none; }
+}

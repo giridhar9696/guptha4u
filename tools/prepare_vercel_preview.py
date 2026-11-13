@@ -42,7 +42,8 @@ def prepare(source, target, checkout_demo=False):
                      'storefront_hosted.py', 'storefront_stationery.py'):
         shutil.copy2(ROOT / filename, target / filename)
     shutil.copy2(ROOT / 'reference' / 'catalogue-navigation.json', target / 'reference')
-    shutil.copy2(ROOT / 'reference' / 'stationery-demo.json', target / 'reference')
+    for filename in ('stationery-demo.json', 'kalam-demo.json'):
+        shutil.copy2(ROOT / 'reference' / filename, target / 'reference')
     assets = target / 'public' / 'storefront'
     shutil.copytree(ASSETS, assets, ignore=shutil.ignore_patterns('media'))
     for name in image_names:

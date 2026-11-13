@@ -18,13 +18,18 @@ const categories = [
   ["Accessories", "accessories"], ["Brands", "brands"],
 ]
 
-export default function MeadowRiseFooter({ demoCheckout }: { demoCheckout: boolean }) {
+export default function MeadowRiseFooter({ demoCheckout, department, store }: {
+  demoCheckout: boolean
+  department: string
+  store: { name: string; address: string; phone: string; telephone: string; map: string }
+}) {
   const id = useId()
+  const savedQuery = department === "art" ? "" : "?department=" + encodeURIComponent(department)
   const columns = [
     { title: "Paint & make", links: categories.slice(0, 4).map(([name, slug]) => [name, "/shop/category/" + slug]) },
     { title: "Draw & design", links: categories.slice(4).map(([name, slug]) => [name, "/shop/category/" + slug]) },
-    { title: "The store", links: [["Art catalogue", "/shop/catalogue"], ["Stationery", "/shop/stationery"], ["Your account", "/shop/account"],
-      ["Wishlist", "/shop/wishlist"], ["Cart", "/shop/cart"], ["About this demo", "/shop/about"],
+    { title: "The store", links: [["Art catalogue", "/shop/catalogue"], ["Stationery", "/shop/stationery"], ["Kalam", "/shop/kalam"], ["Your account", "/shop/account"],
+      ["Wishlist", "/shop/wishlist" + savedQuery], ["Cart", "/shop/cart" + savedQuery], ["About this demo", "/shop/about"],
       ...(demoCheckout ? [["Gupta Privilege", "/shop/privilege"]] : [])] },
   ]
   return (
@@ -66,6 +71,12 @@ export default function MeadowRiseFooter({ demoCheckout }: { demoCheckout: boole
               <img src="/storefront/instagram.svg" alt="" width="20" height="20" />
               Follow us on Instagram
             </a>
+            {store.name && <address className="footer-location">
+              <strong>{store.name}</strong>
+              <span>{store.address}</span>
+              <a href={store.telephone}>{store.phone}</a>
+              <a href={store.map}>Get directions</a>
+            </address>}
           </div>
           <nav className="mrf-cols" aria-label="Footer">
             {columns.map(({ title, links }) => (

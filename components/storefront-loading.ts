@@ -1,7 +1,12 @@
 import { gsap } from "gsap"
+import { createElement } from "react"
+import { createRoot } from "react-dom/client"
+import { KalamWritingEffect } from "./ui/apple-hello-effect"
 
 const loader = document.querySelector<HTMLElement>("[data-studio-loading]")
 const motion = matchMedia("(prefers-reduced-motion: no-preference)")
+const kalamMount = loader?.querySelector("[data-kalam-loader]")
+const kalamRoot = kalamMount ? createRoot(kalamMount) : null
 const toolsImage = new Image()
 let opening: gsap.core.Timeline | undefined
 
@@ -95,11 +100,41 @@ function drawMorph(context: CanvasRenderingContext2D, from: Tool, to: Tool, prog
 }
 
 document.addEventListener("click", async event => {
-  if (!loader || !motion.matches || event.defaultPrevented || event.button || event.ctrlKey || event.metaKey ||
+  if (!loader || event.defaultPrevented || event.button || event.ctrlKey || event.metaKey ||
       event.shiftKey || event.altKey || !(event.target instanceof Element)) return
-  const link = event.target.closest<HTMLAnchorElement>("a[data-department-switch]")
-  const destination = link?.dataset.departmentSwitch
-  if (!link || !destination || link.target || destination === document.body.dataset.department) return
+  const link = event.target.closest<HTMLAnchorElement>("a[data-department-switch], a[href='/shop/kalam']:not(.kalam-back)")
+  const destination = link?.dataset.departmentSwitch || (link?.pathname === "/shop/kalam" ? "kalam" : "")
+  if (!link || !destination || link.target) return
+  if (destination === "kalam" && kalamRoot) {
+    const signature = document.querySelector("[data-department-switch='kalam'] .kalam-signature")
+    const strokes = Array.from(signature?.querySelectorAll("path") || [], path => path.getAttribute("d") || "")
+    if (!strokes.length) return
+    event.preventDefault()
+    if (!loader.hidden && loader.dataset.loadingMode === "kalam-entry") return
+    opening?.kill()
+    loader.classList.remove("is-painting")
+    gsap.set(loader, { clearProps: "opacity" })
+    loader.dataset.loadingMode = "kalam-entry"
+    loader.querySelector("[role=status]")!.textContent = "Opening Kalam…"
+    loader.hidden = false
+    let navigating = false
+    const enter = () => {
+      if (navigating) return
+      navigating = true
+      clearTimeout(deadline)
+      if (link.href === location.href) {
+        kalamRoot.render(null)
+        loader.hidden = true
+        return
+      }
+      try { sessionStorage.setItem("gupta:department-arrival", destination) } catch { /* Navigation works without storage. */ }
+      location.assign(link.href)
+    }
+    const deadline = window.setTimeout(enter, 2400)
+    kalamRoot.render(createElement(KalamWritingEffect, { strokes, reduced: !motion.matches, onComplete: enter }))
+    return
+  }
+  if (!motion.matches || destination === document.body.dataset.department || document.body.dataset.department === "kalam") return
   event.preventDefault()
   if (!loader.hidden && loader.dataset.loadingMode === "switch") return
   opening?.kill()
@@ -142,6 +177,7 @@ document.addEventListener("click", async event => {
 
 window.addEventListener("pageshow", event => {
   if (event.persisted && loader) {
+    kalamRoot?.render(null)
     gsap.set(loader.querySelectorAll(".department-morph, .department-hook, [role=status]"), { clearProps: "opacity" })
   }
 })

@@ -1,0 +1,242 @@
+[
+  {
+    "id": "kalam-obsidian-gold",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Obsidian Gold Fountain Pen",
+    "description": "Glossy black lacquer with warm gold trim. Illustrative demo design.",
+    "mrp": 1190000,
+    "price": 1011500,
+    "concept": true
+  },
+  {
+    "id": "kalam-midnight-silver",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Midnight Silver Fountain Pen",
+    "description": "Midnight blue lacquer with polished silver trim. Illustrative demo design.",
+    "mrp": 1120000,
+    "price": 952000,
+    "concept": true
+  },
+  {
+    "id": "kalam-emerald-gold",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Emerald Gold Fountain Pen",
+    "description": "Emerald lacquer with a gold tone clip and bands. Illustrative demo design.",
+    "mrp": 1180000,
+    "price": 1003000,
+    "concept": true
+  },
+  {
+    "id": "kalam-wine-lacquer",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Wine Lacquer Fountain Pen",
+    "description": "Deep wine lacquer and gold tone detailing. Illustrative demo design.",
+    "mrp": 1160000,
+    "price": 986000,
+    "concept": true
+  },
+  {
+    "id": "kalam-ivory-gold",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Ivory Gold Fountain Pen",
+    "description": "An ivory barrel with a gold tone clip and bands. Illustrative demo design.",
+    "mrp": 1090000,
+    "price": 926500,
+    "concept": true
+  },
+  {
+    "id": "kalam-champagne",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Champagne Fountain Pen",
+    "description": "A champagne metallic finish and matching gold tone trim. Illustrative demo design.",
+    "mrp": 1370000,
+    "price": 1164500,
+    "concept": true
+  },
+  {
+    "id": "kalam-steel-grey",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Steel Grey Fountain Pen",
+    "description": "A graphite grey barrel with silver tone fittings. Illustrative demo design.",
+    "mrp": 1020000,
+    "price": 867000,
+    "concept": true
+  },
+  {
+    "id": "kalam-deep-teal",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Deep Teal Fountain Pen",
+    "description": "A deep teal finish framed by silver tone trim. Illustrative demo design.",
+    "mrp": 1080000,
+    "price": 918000,
+    "concept": true
+  },
+  {
+    "id": "kalam-plum-lacquer",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Plum Lacquer Fountain Pen",
+    "description": "Plum lacquer paired with a gold tone clip. Illustrative demo design.",
+    "mrp": 1130000,
+    "price": 960500,
+    "concept": true
+  },
+  {
+    "id": "kalam-cobalt-silver",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Cobalt Silver Fountain Pen",
+    "description": "Bright cobalt lacquer with silver tone bands. Illustrative demo design.",
+    "mrp": 1060000,
+    "price": 901000,
+    "concept": true
+  },
+  {
+    "id": "kalam-copper-glaze",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Copper Glaze Fountain Pen",
+    "description": "A warm copper orange barrel with gold tone trim. Illustrative demo design.",
+    "mrp": 1250000,
+    "price": 1062500,
+    "concept": true
+  },
+  {
+    "id": "kalam-matte-charcoal",
+    "group": "premium-pens",
+    "type": "Fountain pens",
+    "name": "Matte Charcoal Fountain Pen",
+    "description": "Matte charcoal with dark fittings and a dark nib. Illustrative demo design.",
+    "mrp": 990000,
+    "price": 841500,
+    "concept": true
+  },
+  {
+    "id": "kalam-burgundy-marble",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Burgundy Marble Fountain Pen",
+    "description": "A mottled burgundy finish with an ornate gold tone nib. Illustrative demo design.",
+    "mrp": 780000,
+    "price": 663000,
+    "concept": true
+  },
+  {
+    "id": "kalam-amber-tortoiseshell",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Amber Tortoiseshell Fountain Pen",
+    "description": "An amber and brown tortoiseshell pattern with an engraved band. Illustrative demo design.",
+    "mrp": 860000,
+    "price": 731000,
+    "concept": true
+  },
+  {
+    "id": "kalam-chased-ebony",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Chased Ebony Fountain Pen",
+    "description": "Black with a chased texture and a patterned gold tone band. Illustrative demo design.",
+    "mrp": 830000,
+    "price": 705500,
+    "concept": true
+  },
+  {
+    "id": "kalam-pearl-ivory",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Pearl Ivory Fountain Pen",
+    "description": "A pearlescent ivory finish with fine gold tone bands. Illustrative demo design.",
+    "mrp": 760000,
+    "price": 646000,
+    "concept": true
+  },
+  {
+    "id": "kalam-forest-stripe",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Forest Stripe Fountain Pen",
+    "description": "Deep green stripes with an engraved gold tone band. Illustrative demo design.",
+    "mrp": 810000,
+    "price": 688500,
+    "concept": true
+  },
+  {
+    "id": "kalam-blue-marble",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Blue Marble Fountain Pen",
+    "description": "A smoky blue marble pattern with slim gold tone bands. Illustrative demo design.",
+    "mrp": 790000,
+    "price": 671500,
+    "concept": true
+  },
+  {
+    "id": "kalam-oxblood-classic",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Oxblood Classic Fountain Pen",
+    "description": "A polished oxblood finish with a wide engraved band. Illustrative demo design.",
+    "mrp": 890000,
+    "price": 756500,
+    "concept": true
+  },
+  {
+    "id": "kalam-golden-grain",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Golden Grain Fountain Pen",
+    "description": "A golden brown grain pattern with a gold tone clip. Illustrative demo design.",
+    "mrp": 770000,
+    "price": 654500,
+    "concept": true
+  },
+  {
+    "id": "kalam-smoke-marble",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Smoke Marble Fountain Pen",
+    "description": "A smoky grey marble finish with fine gold tone bands. Illustrative demo design.",
+    "mrp": 750000,
+    "price": 637500,
+    "concept": true
+  },
+  {
+    "id": "kalam-dusky-amethyst",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Dusky Amethyst Fountain Pen",
+    "description": "A mottled amethyst finish with warm metal trim. Illustrative demo design.",
+    "mrp": 820000,
+    "price": 697000,
+    "concept": true
+  },
+  {
+    "id": "kalam-olive-marble",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Olive Marble Fountain Pen",
+    "description": "An olive green marble pattern with gold tone bands. Illustrative demo design.",
+    "mrp": 780000,
+    "price": 663000,
+    "concept": true
+  },
+  {
+    "id": "kalam-engraved-brass",
+    "group": "grandfathers-collection",
+    "type": "Fountain pens",
+    "name": "Engraved Brass Fountain Pen",
+    "description": "A warm brass tone finish with engraved scrollwork. Illustrative demo design.",
+    "mrp": 940000,
+    "price": 799000,
+    "concept": true
+  }
+]

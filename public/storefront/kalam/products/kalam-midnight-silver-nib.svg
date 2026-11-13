@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 145 158 158" width="158" height="158" role="img"><title>Midnight Silver Fountain Pen nib detail</title>
+<defs>
+  <linearGradient id="barrel" x2="0" y2="1"><stop stop-color="#081129"/><stop offset=".22" stop-color="#354d83"/><stop offset=".42" stop-color="#081129"/><stop offset=".66" stop-color="#354d83"/><stop offset="1" stop-color="#081129"/></linearGradient>
+  <linearGradient id="metal" x2="0" y2="1"><stop stop-color="#4b5361"/><stop offset=".22" stop-color="#f5f6f4"/><stop offset=".49" stop-color="#8c939e"/><stop offset=".67" stop-color="#f5f6f4"/><stop offset="1" stop-color="#4b5361"/></linearGradient>
+  <linearGradient id="grip" x2="0" y2="1"><stop stop-color="#131214"/><stop offset=".31" stop-color="#57575b"/><stop offset=".67" stop-color="#252327"/><stop offset="1" stop-color="#151416"/></linearGradient>
+  <clipPath id="body"><path d="M102 206C144 201 264 199 363 199C392 199 410 206 413 219C417 234 405 245 383 247L102 244Z"/></clipPath>
+</defs>
+<path d="M19 225Q35 220 58 204L78 207L85 223L75 238L58 241Q39 229 19 225Z" fill="url(#metal)" stroke="#4b5361" stroke-width="1.2"/>
+<path d="M20 225L53 225M42 221C48 214 55 214 62 213M43 230C51 235 59 235 65 232" fill="none" stroke="#4b5361" stroke-width="1.2"/>
+<circle cx="54" cy="225" r="2.6" fill="#4b5361"/>
+<path d="M74 207Q87 210 106 204L111 244Q89 240 74 239Z" fill="url(#grip)"/>
+<path d="M102 206C144 201 264 199 363 199C392 199 410 206 413 219C417 234 405 245 383 247L102 244Z" fill="url(#barrel)" stroke="#081129" stroke-width="1.4"/>
+<g clip-path="url(#body)">
+
+  <path d="M110 209Q221 196 399 210" fill="none" stroke="#fff" stroke-opacity="0.27" stroke-width="3"/>
+  <rect x="102" y="200" width="5" height="52" fill="url(#metal)"/>
+  <rect x="239" y="194" width="12" height="60" fill="url(#metal)"/>
+  <rect x="258" y="194" width="3" height="60" fill="url(#metal)"/>
+  <rect x="395" y="195" width="5" height="56" fill="url(#metal)"/>
+</g>
+<path d="M386 204C389 195 388 184 374 182C354 179 324 181 294 191Q289 195 297 197C332 190 361 185 376 191Q383 194 382 205Z" fill="url(#metal)" stroke="#4b5361" stroke-width="1.15"/>
+<path d="M301 191Q350 179 375 184" fill="none" stroke="#f5f6f4" stroke-width="1.25" opacity=".8"/>
+</svg>

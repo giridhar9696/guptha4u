@@ -26,6 +26,12 @@ MEDIA = Path(os.environ.get('GUPTHA_MEDIA', ASSETS / 'media')).resolve()
 BRAND = 'Gupta Art and Stationery'
 BRAND_LOGO = '/storefront/gupta-1916.svg'
 SHOP = '/shop'
+DEPARTMENTS = {'art': (SHOP, 'Art Store'), 'stationery': (stationery.STATIONERY, 'Stationery'),
+               'kalam': (stationery.KALAM, 'Kalam')}
+STORE_MAP = 'https://maps.app.goo.gl/ohs2bGtUZy9zZHdw7'
+STORE_ADDRESS = ('47-15-5/9, Gupta Buildings, Ground Floor, Dwarkanagar Junction, Station Road, '
+                 'beside Old Khazana Jewellers, Visakhapatnam, Andhra Pradesh 530016')
+STORE_PHONE = '0891-2562196'
 PLACEHOLDER = '/storefront/placeholder.svg'
 PAGE_SIZE = 12
 PRODUCT_FIELDS = ('id, name, sku, category, price, stock, description, image, brand, subcategory, variant, '
@@ -259,27 +265,33 @@ def nav_links(products=None, dropdown=False):
     return ''.join(links)
 
 
-def layout(title, description, path, content, origin, notice='', noindex=False, structured=None, products=(), demo=False):
+def layout(title, description, path, content, origin, notice='', noindex=False, structured=None, products=(), demo=False,
+           saved_department='art'):
     full_title = BRAND if not title else f'{title} | {BRAND}'
     canonical = escape(origin + path)
     markup = ''
     if structured:
         markup = '<script type="application/ld+json">' + json.dumps(structured).replace('<', r'\u003c') + '</script>'
     robots = '<meta name="robots" content="noindex,follow">' if noindex or CATALOGUE_PREVIEW or HOSTED_DEMO else ''
-    stationery_page = path == stationery.STATIONERY or path.startswith(stationery.STATIONERY + '/')
-    stationery_link = f'<a href="{stationery.STATIONERY}">Stationery</a>'
-    categories = (stationery.nav_links(path) if stationery_page else
+    stationery_page = (saved_department == 'stationery' or path == stationery.STATIONERY
+                       or path.startswith(stationery.STATIONERY + '/'))
+    kalam_page = saved_department == 'kalam' or stationery.is_kalam(path)
+    department = 'kalam' if kalam_page else 'stationery' if stationery_page else 'art'
+    categories = (stationery.nav_links(path, kalam=kalam_page) if stationery_page or kalam_page else
                   '<a href="/shop/catalogue">All materials</a>' + nav_links(products, True))
     current = ' aria-current="true"'
-    navigation = (f'<nav class="stationery-nav" aria-label="Store departments">'
-                  f'<a href="{SHOP}" data-department-switch="art"{current if not stationery_page else ""}>Art Store</a>'
-                  f'<a href="{stationery.STATIONERY}" data-department-switch="stationery"{current if stationery_page else ""}>Stationery</a></nav>')
+    navigation = '<nav class="stationery-nav" aria-label="Store departments">' + ''.join(
+        f'<a href="{href}" data-department-switch="{key}"{current if key == department else ""}>'
+        f'{stationery.kalam_signature() if key == "kalam" else label}</a>'
+        for key, (href, label) in DEPARTMENTS.items()) + '</nav>'
     mobile_navigation = f'''<details class="mobile-nav"><summary aria-label="Browse categories">{icon('menu')}</summary>
     <nav aria-label="Mobile categories">{categories}</nav>
   </details>'''
-    search_path = stationery.STATIONERY + '/catalogue' if stationery_page else SHOP + '/catalogue'
-    search_label = 'Search stationery' if stationery_page else 'Search materials'
+    search_path = DEPARTMENTS[department][0] + '/catalogue'
+    search_label = {'art': 'Search materials', 'stationery': 'Search stationery', 'kalam': 'Search Kalam'}[department]
+    search_api = stationery.KALAM_SEARCH if kalam_page else stationery.SEARCH if stationery_page else '/api/storefront/search'
     member_link = '<a href="/shop/privilege">Privilege membership</a>' if demo else ''
+    saved_query = '' if department == 'art' else f'?department={department}'
     wordmark = (f'<a href="{SHOP}" class="wordmark" aria-label="{BRAND}, home">'
                 f'<img class="wordmark-logo" src="{BRAND_LOGO}" alt="" width="54" height="54">'
                 '<div><span>Gupta</span><small>Art and Stationery</small></div></a>')
@@ -290,7 +302,7 @@ def layout(title, description, path, content, origin, notice='', noindex=False, 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="page-type" content="product">
 <meta name="site-kind" content="other">
-<meta name="theme-color" content="#F7F3EC">
+<meta name="theme-color" content="{'#161514' if kalam_page else '#F7F3EC'}">
 <title>{escape(full_title)}</title>
 <meta name="description" content="{escape(description)}">
 <link rel="canonical" href="{canonical}">
@@ -301,7 +313,8 @@ def layout(title, description, path, content, origin, notice='', noindex=False, 
 <link rel="stylesheet" href="/storefront/polish.css">
 <link rel="stylesheet" href="/storefront/updates.css">
 <link rel="stylesheet" href="/storefront/stationery/stationery.css">
-{'<script defer src="/storefront/stationery/stationery.js"></script>' if stationery_page else ''}
+{'<link rel="stylesheet" href="/storefront/kalam/studio.css">' if kalam_page else ''}
+{'<script defer src="/storefront/stationery/stationery.js"></script>' if stationery_page or kalam_page else ''}
 {'<link rel="stylesheet" href="/storefront/account.css">' if path in ('/shop/account', '/shop/sign-in', '/shop/sign-up') else ''}
 {'<link rel="stylesheet" href="/storefront/checkout.css">' if demo else ''}
 {'<link rel="stylesheet" href="/storefront/cart.css">' if path == SHOP + '/cart' else ''}
@@ -309,7 +322,7 @@ def layout(title, description, path, content, origin, notice='', noindex=False, 
 <script type="module" src="/storefront/vendor/storefront.js"></script>
 {markup}
 </head>
-<body data-department="{'stationery' if stationery_page else 'art'}"{' data-catalogue-preview' if CATALOGUE_PREVIEW else ''}>
+<body data-department="{department}"{' data-catalogue-preview' if CATALOGUE_PREVIEW else ''}>
 <div class="studio-loading" data-studio-loading hidden>
   <svg class="loader-logo" viewBox="0 0 1200 1200" aria-hidden="true">
     <defs><mask id="gupta-paint-mask">
@@ -328,6 +341,7 @@ def layout(title, description, path, content, origin, notice='', noindex=False, 
   <span class="art-loader" aria-hidden="true"></span>
   <svg class="stationery-loader" viewBox="0 0 64 64" aria-hidden="true"><path d="M10 54 18 30 39 9l16 16-21 21-24 8Zm0 0 20-20m-4-4a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"/></svg>
   <div class="department-morph" aria-hidden="true"><canvas width="192" height="192"></canvas><canvas width="192" height="192"></canvas></div>
+  <div data-kalam-loader aria-hidden="true"></div>
   <p class="department-hook" aria-hidden="true"></p>
   <p role="status">Opening Gupta…</p>
 </div>
@@ -340,7 +354,7 @@ def layout(title, description, path, content, origin, notice='', noindex=False, 
   {mobile_navigation}
   {wordmark}
   {navigation}
-  <form class="global-search" role="search" action="{search_path}" data-search-api="{stationery.SEARCH if stationery_page else '/api/storefront/search'}">
+  <form class="global-search" role="search" action="{search_path}" data-search-api="{search_api}">
     <label class="sr-only" for="search">{search_label}</label>
     <input id="search" type="search" name="q" placeholder="{search_label}" maxlength="100" autocomplete="off">
     <button aria-label="Search">{icon('search')}</button>
@@ -349,12 +363,12 @@ def layout(title, description, path, content, origin, notice='', noindex=False, 
   </form>
   <div class="utilities">
     <a href="/shop/account" aria-label="Account"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="3.4"/><path d="M5 20v-1a7 7 0 0 1 14 0v1Z"/></svg></a>
-    <a href="/shop/wishlist" aria-label="Wishlist">{icon('heart')}</a>
-    <a href="/shop/cart" class="bag" aria-label="Cart">{icon('bag')} <span data-cart-count>0</span></a>
+    <a href="/shop/wishlist{saved_query}" aria-label="Wishlist">{icon('heart')}</a>
+    <a href="/shop/cart{saved_query}" class="bag" aria-label="Cart">{icon('bag')} <span data-cart-count>0</span></a>
   </div>
 </div>
 <div class="department-categories"><nav class="wrap category-nav" data-category-navigation
-  aria-label="{'Stationery categories' if stationery_page else 'Shop categories'}">{categories}</nav></div>
+  aria-label="{department.capitalize() if department != 'art' else 'Shop'} categories">{categories}</nav></div>
 </header>
 {'<p class="catalogue-preview-note">Catalogue preview · Browse materials and search the demo range.</p>' if CATALOGUE_PREVIEW else ''}
 <div data-store-announcement>{notice}</div>
@@ -363,9 +377,15 @@ def layout(title, description, path, content, origin, notice='', noindex=False, 
   <div class="wrap footer-grid">
     <div>{wordmark}
     <p>Art materials and stationery for your workbench.</p>
-    <a class="footer-instagram" href="https://www.instagram.com/gupta_artstore/"><img src="/storefront/instagram.svg" alt="" width="20" height="20">Follow us on Instagram</a></div>
+    <a class="footer-instagram" href="https://www.instagram.com/gupta_artstore/"><img src="/storefront/instagram.svg" alt="" width="20" height="20">Follow us on Instagram</a>
+    <address class="footer-location">
+      <strong>G S 1916 · Gupta’s Art Store</strong>
+      <span>{STORE_ADDRESS}</span>
+      <a href="tel:+918912562196">{STORE_PHONE}</a>
+      <a href="{STORE_MAP}">Get directions</a>
+    </address></div>
     <nav aria-label="Footer categories">{nav_links()}</nav>
-    <nav aria-label="Store information"><a href="/shop/catalogue">All materials</a>{stationery_link}{member_link}<a href="/shop/about">About this demo</a><a href="/shop/privacy">Privacy policy</a><a href="/shop/refunds">Refund policy</a></nav>
+    <nav aria-label="Store information"><a href="/shop/catalogue">All materials</a><a href="{stationery.STATIONERY}">Stationery</a><a href="{stationery.KALAM}">Kalam</a>{member_link}<a href="/shop/about">About this demo</a><a href="/shop/privacy">Privacy policy</a><a href="/shop/refunds">Refund policy</a></nav>
   </div>
   <div class="wrap footer-bottom"><span>{BRAND}</span><span>Demo catalogue</span></div>
 </footer></div>
@@ -508,9 +528,9 @@ def empty(title, message):
     return f'<div class="empty"><h2>{title}</h2><p>{message}</p><a class="button outline" href="/shop/catalogue">Browse all materials</a></div>'
 
 
-def trail(label, parent=None):
+def trail(label, parent=None, home=SHOP):
     middle = f'<li><a href="{parent[0]}">{escape(parent[1])}</a></li>' if parent else ''
-    return (f'<nav class="trail" aria-label="Breadcrumb"><ol><li><a href="/shop">Home</a></li>{middle}'
+    return (f'<nav class="trail" aria-label="Breadcrumb"><ol><li><a href="{home}">Home</a></li>{middle}'
             f'<li aria-current="page">{escape(label)}</li></ol></nav>')
 
 
@@ -959,7 +979,8 @@ def storefront_response(path, query, connect, origin, raw_cookies=''):
     if path == '/robots.txt':
         rules = 'User-agent: *\nDisallow: /api/\nDisallow: /legacy-shop\n'
         return response(200, rules + f'Sitemap: {origin}/sitemap.xml\n', 'text/plain')
-    if (path not in {'/sitemap.xml', '/api/storefront/products', '/api/storefront/search', stationery.SEARCH, SHOP}
+    if (path not in {'/sitemap.xml', '/api/storefront/products', '/api/storefront/search', stationery.SEARCH,
+                     stationery.KALAM_SEARCH, SHOP}
             and not path.startswith(SHOP + '/')):
         return None
     if len(query) > 6500:
@@ -968,15 +989,23 @@ def storefront_response(path, query, connect, origin, raw_cookies=''):
         return response(303, '', headers=[('Cache-Control', 'no-store'),
                         ('Location', '/shop/sign-up?' + urlencode({'next': path}))])
     params = parse_qs(query)
-    if path == stationery.SEARCH:
-        return json_response(stationery.suggestions(params.get('q', [''])[0][:100]))
-    if path == stationery.STATIONERY or path.startswith(stationery.STATIONERY + '/'):
-        with closing(connect()) as c:
-            notice = announcement(c)
+    if path in (stationery.SEARCH, stationery.KALAM_SEARCH):
+        return json_response(stationery.suggestions(params.get('q', [''])[0][:100], kalam=path == stationery.KALAM_SEARCH))
+    if destination := stationery.legacy_kalam_path(path):
+        if query:
+            destination += '?' + urlencode(params, doseq=True)
+        return response(308, '', headers=[('Location', destination)])
+    kalam_page = stationery.is_kalam(path)
+    if kalam_page or path == stationery.STATIONERY or path.startswith(stationery.STATIONERY + '/'):
+        notice = ''
+        if not kalam_page:
+            with closing(connect()) as c:
+                notice = announcement(c)
         demo = demo_enabled()
         membership = privilege_strip() if demo and path.rstrip('/') == stationery.STATIONERY else ''
         status, title, content = stationery.page(path, params, price, save_button, membership)
-        return response(status, layout(title, 'Browse stationery, premium pens and the Gupta heritage collection.',
+        description = ('Browse Premium Kalams and Grandfather’s Collection.' if kalam_page else 'Browse Gupta stationery.')
+        return response(status, layout(title, description,
                                        path, content, origin, notice=notice, noindex=True, demo=demo),
                         headers=[('Cache-Control', 'no-cache')])
     if path == '/api/storefront/products':
@@ -1036,6 +1065,7 @@ def storefront_response(path, query, connect, origin, raw_cookies=''):
     demo = demo_enabled()
     title, desc, status, noindex, schema = '', 'Browse art supplies and stationery from Gupta’s demo catalogue.', 200, False, None
     canonical = path
+    saved_department = 'art'
     if path in {SHOP, SHOP + '/'}:
         canonical = SHOP
         content = home(products, demo)
@@ -1061,10 +1091,15 @@ def storefront_response(path, query, connect, origin, raw_cookies=''):
         title = 'Your cart' if path.endswith('/cart') else 'Your wishlist'
         view = 'cart' if path.endswith('/cart') else 'wishlist'
         noindex = True
-        content = f'''<section class="wrap page{' cart-page' if view == 'cart' else ''}">{trail(title)}<h1>{title}</h1>
+        requested_department = params.get('department', ['art'])[0]
+        if requested_department in DEPARTMENTS:
+            saved_department = requested_department
+        department_home, department_label = DEPARTMENTS[saved_department]
+        browse_url = department_home + '/catalogue' if saved_department == 'art' else department_home
+        content = f'''<section class="wrap page{' cart-page' if view == 'cart' else ''}">{trail(title, home=department_home)}<h1>{title}</h1>
 {'<p class="saved-intro">Keep materials you want to find again.</p>' if view == 'wishlist' else ''}
-<div data-view="{view}" data-demo-checkout="{int(demo)}" aria-busy="true"><p>Loading your {view}…</p></div>
-<noscript><p>Enable JavaScript to see the items saved in this browser.</p><a href="/shop/catalogue">Browse materials</a></noscript></section>'''
+<div data-view="{view}" data-demo-checkout="{int(demo)}" data-browse-url="{browse_url}" data-browse-label="{department_label}" aria-busy="true"><p>Loading your {view}…</p></div>
+<noscript><p>Enable JavaScript to see the items saved in this browser.</p><a href="{browse_url}">Browse {department_label}</a></noscript></section>'''
     elif demo and path in {SHOP + '/checkout', SHOP + '/privilege'}:
         view = path.rsplit('/', 1)[1]
         title = 'Gupta Privilege' if view == 'privilege' else 'Checkout'
@@ -1107,7 +1142,7 @@ def storefront_response(path, query, connect, origin, raw_cookies=''):
             title, status, noindex = 'Page not found', 404, True
             content = '<section class="wrap page">' + empty(title, 'This page or product is no longer available.') + '</section>'
     return response(status, layout(title, desc, canonical, content, origin, notice, noindex, schema,
-                                   products if nav_products is None else nav_products, demo),
+                                   products if nav_products is None else nav_products, demo, saved_department),
                     headers=[('Cache-Control','no-cache')])
 
 

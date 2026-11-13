@@ -45,11 +45,12 @@ function flyPen(from: DOMRect, target: HTMLElement, photo: Element, done: () => 
   return { layer, animation }
 }
 
-function PenInspector({ pen, title, origin, onClose }: {
+function PenInspector({ pen, title, origin, onClose, returnFocus }: {
   pen: Pen
   title: string
   origin: HTMLElement | null
   onClose: () => void
+  returnFocus: HTMLElement
 }) {
   const [angle, setAngle] = React.useState(0)
   const dialog = React.useRef<HTMLDialogElement>(null)
@@ -81,7 +82,11 @@ function PenInspector({ pen, title, origin, onClose }: {
       if (flight.current) target.setAttribute("data-flying", "")
     }
     document.dispatchEvent(new Event("storefront:navigated"))
-    return () => { cancelFlight(); panel.close() }
+    return () => {
+      cancelFlight()
+      panel.close()
+      requestAnimationFrame(() => returnFocus.focus({ preventScroll: true }))
+    }
   }, [])
 
   function close() {
@@ -204,8 +209,6 @@ function PenGallery({ title, items, kind }: Gallery) {
   const origin = open?.button.querySelector<HTMLElement>(".pen-rail-figure, .pen-shelf-figure")
   return <>
   <section className="pen-gallery" aria-label={title}>
-    <a className="button outline pen-gallery-back" href="/shop/stationery">← All stationery</a>
-    <h1>{title}</h1>
     <div className="pen-rail" ref={rail} onScroll={centreItem} aria-label="Choose a pen"
       onPointerDown={event => { dragX.current = event.clientX; dragged.current = false }}
       onPointerMove={event => {
@@ -245,17 +248,17 @@ function PenGallery({ title, items, kind }: Gallery) {
     </div>
     {selected && <div className="pen-gallery-caption" aria-live="polite">
       <p>{selected.name}</p><Prices pen={selected} /><PenDiscount discount={selected.discount} />
+      <button type="button" className="button outline pen-gallery-details" onClick={() => {
+        const button = buttons.current[active]
+        if (button) setOpen({ pen: selected, button })
+      }}>View details</button>
     </div>}
   </section>
     <PenProductShelf pens={shelfPens} heading={kind || "Shop the collection"}
       lifted={open?.button.classList.contains("pen-shelf-preview") ? open.pen.id : undefined}
       inspect={(pen, button) => setOpen({ pen, button })} />
     {open && <PenInspector pen={open.pen} title={title} origin={origin ?? null}
-      onClose={() => {
-        const button = open.button
-        setOpen(null)
-        requestAnimationFrame(() => button?.focus({ preventScroll: true }))
-      }} />}
+      returnFocus={open.button} onClose={() => setOpen(null)} />}
   </>
 }
 

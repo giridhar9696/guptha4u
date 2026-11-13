@@ -15,6 +15,8 @@ const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR
 const status = document.querySelector('#store-status');
 const view = document.querySelector('[data-view]');
 const isCart = view?.dataset.view === 'cart';
+const browseUrl = view?.dataset.browseUrl || '/shop/catalogue';
+const browseLabel = view?.dataset.browseLabel || 'Art Store';
 let currentProducts = new Map();
 let viewRequest = 0;
 let viewReady = false;
@@ -122,7 +124,7 @@ for (const img of document.images) {
 
 function empty(title, message) {
   return '<div class="empty"><h2>' + title + '</h2><p>' + message +
-    '</p><a class="button outline" href="/shop/catalogue">Browse materials</a></div>';
+    '</p><a class="button outline" href="' + browseUrl + '">Browse ' + browseLabel + '</a></div>';
 }
 
 function renderSaved() {
@@ -135,8 +137,7 @@ function renderSaved() {
       <div class="cart-empty-copy"><h2>Your cart is empty</h2>
         <p>Find the materials you need for your next project.</p>
         <div class="cart-browse">
-          <a class="button" href="/shop/catalogue">Browse art supplies</a>
-          <a class="button outline" href="/shop/stationery">Shop stationery</a>
+          <a class="button" href="${browseUrl}">Browse ${browseLabel}</a>
         </div>
       </div>
       <img src="/storefront/cart-workbench.webp" alt="" width="1000" height="750" decoding="async">
@@ -165,7 +166,7 @@ function renderSaved() {
     }
     const availability = !p ? 'No longer in the catalogue' : !available ? 'Out of stock' :
       isCart && qty > limit ? 'Update quantity to ' + limit + ' or fewer.' :
-      p.demo_stationery ? 'Stationery demo' : 'In stock';
+      p.demo_stationery ? (p.url.startsWith('/shop/kalam/') ? 'Kalam demo' : 'Stationery demo') : 'In stock';
     const link = p ? '<a class="cart-item-name" href="' + p.url + '">' + name + '</a>' : '<strong>' + name + '</strong>';
     const action = isCart ? 'data-remove="' + id + '"' : 'data-save="' + id + '" data-name="' + name + '"';
     const quantity = isCart && available ? '<label class="cart-quantity">Quantity<span class="sr-only"> for ' + name +
@@ -183,12 +184,12 @@ function renderSaved() {
   }).join('');
   const items = '<ul class="cart-lines">' + lines + '</ul>';
   view.innerHTML = isCart ? '<div class="cart-layout"><div class="cart-items">' + items +
-    '<a class="cart-continue" href="/shop/catalogue">Continue shopping</a></div>' +
+    '<a class="cart-continue" href="' + browseUrl + '">Continue shopping</a></div>' +
     '<section class="cart-summary" aria-labelledby="cart-summary-heading"><h2 id="cart-summary-heading">Order summary</h2>' +
     (hasArt ? '<div class="subtotal"><span>' + (hasStationery ? 'Art supplies subtotal' : 'Subtotal') +
       '</span><strong>' + formatMoney(subtotal) + '</strong></div>' : '') +
-    (hasStationery ? '<div class="subtotal"><span>Stationery demo subtotal</span><strong>' +
-      formatMoney(stationerySubtotal) + '</strong></div><p class="cart-note">Stationery demo items stay in your cart and are excluded from checkout.</p>' : '') +
+    (hasStationery ? '<div class="subtotal"><span>Stationery &amp; Kalam demo subtotal</span><strong>' +
+      formatMoney(stationerySubtotal) + '</strong></div><p class="cart-note">Stationery and Kalam demo items stay in your cart and are excluded from checkout.</p>' : '') +
     (needsReview ? '<p class="cart-note cart-review">Update or remove items that need review before checkout. They are excluded from the subtotal.</p>' : '') +
     (view.dataset.demoCheckout === '1' && hasArt && !needsReview ?
       '<div class="cart-checkout"><a class="button" href="/shop/checkout">' +
@@ -299,7 +300,7 @@ document.addEventListener('submit', async event => {
     const items = cart();
     const total = (items[id] || 0) + quantity;
     if (!product || !Number.isSafeInteger(quantity) || quantity < 1 || total > quantityLimit(product)) {
-      feedback.textContent = product?.demo_stationery ? 'The demo cart allows up to 99 of each stationery item.' :
+      feedback.textContent = product?.demo_stationery ? 'The demo cart allows up to 99 of each item.' :
         product?.stock > 0 ? 'Only ' + product.stock + ' in stock, including items already in your cart.' :
         'This material is currently unavailable.';
       return;

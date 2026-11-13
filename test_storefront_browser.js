@@ -243,34 +243,23 @@ async page => {
     'Stationery did not show the shared Privilege amounts');
   const brandLogo = page.locator('.site-header .wordmark-logo');
   expect(await brandLogo.evaluate(async img => { await img.decode(); return img.naturalWidth > 0; }), 'Gupta logo failed to load');
-  const pendant = page.locator('.stationery-pendant');
-  const premium = page.locator('[data-stationery-object="premium-pens"]');
-  const heritage = page.locator('[data-stationery-object="grandfathers-collection"]');
-  expect(await page.locator('.stationery-pendant.is-lit').count() === 0, 'Lamp appeared before hover');
-  for (const display of [premium, heritage]) {
-    await display.hover();
-    const key = await display.getAttribute('data-stationery-object');
-    const x = Number(await display.getAttribute('data-lamp-x'));
-    await page.waitForFunction(x => Math.abs(new DOMMatrix(getComputedStyle(document.querySelector('.stationery-pendant')).transform).e - x) < 1, x);
-    expect(await pendant.evaluate(el => el.classList.contains('is-lit')), 'Lamp failed to appear on ' + key);
-    expect(await page.locator(`.stationery-lift.is-active[data-lift="${key}"]`).count() === 1 &&
-      await page.locator('.stationery-lift.is-active').count() === 1, 'Hover illuminated the wrong pedestal');
-    await page.waitForFunction(() => getComputedStyle(document.querySelector('.stationery-pendant-travel')).transform === 'none');
+  await page.getByRole('navigation', {name:'Store departments'}).getByRole('link', {name:'Kalam', exact:true}).click();
+  await page.locator('[data-loading-mode="kalam-entry"] [data-kalam-loader] svg').waitFor();
+  await page.waitForURL('**/shop/kalam');
+  const displays = page.locator('.kalam-tile');
+  expect(await displays.count() === 2, 'Both Kalam collections should appear in the hero');
+  await page.mouse.move(0, 0);
+  await page.waitForFunction(() => [...document.querySelectorAll('.kalam-lamp')].every(lamp => getComputedStyle(lamp).opacity === '0'));
+  for (const index of [0, 1]) {
+    await displays.nth(index).hover();
+    await page.waitForFunction(index => [...document.querySelectorAll('.kalam-lamp')]
+      .every((lamp, i) => getComputedStyle(lamp).opacity === (i === index ? '1' : '0')), index);
   }
-  await page.locator('[data-stationery-object="school-geometry"]').hover();
-  await page.locator('.stationery-pendant.is-lit').waitFor({state:'detached'});
   const logos = page.locator('.stationery-brand-logos img');
   expect(await logos.count() === 6, 'Premium brand logos missing');
   await logos.first().scrollIntoViewIfNeeded();
   expect(await logos.evaluateAll(images => Promise.all(images.map(img => img.decode())).then(() => true)), 'Brand logo failed to load');
-  const featured = page.locator('.stationery-home-premium .stationery-product-link').first();
-  const productPath = await featured.getAttribute('href');
-  await featured.click();
-  await page.waitForURL('**' + productPath);
-  await page.locator('[data-stationery-product-back]').click();
-  await page.waitForURL('**' + stationery, {waitUntil:'domcontentloaded'}).catch(() => {
-    throw new Error('Product back link stopped at ' + page.url() + ': ' + issues.join(' | '));
-  });
+  await go(stationery);
 
   const stationeryNav = page.getByRole('navigation', {name:'Stationery categories'});
   await stationeryNav.getByRole('button', {name:'Office Tools', exact:true}).hover();
@@ -279,9 +268,14 @@ async page => {
   expect(await page.locator('.stationery-product').count() === 1, 'Stationery submenu lost its type filter');
   expect(await page.locator('a.button').filter({hasText:'All stationery'}).count() === 1, 'Stationery back link needs a button style');
 
-  for (const [collection, count] of [['premium-pens', 5], ['grandfathers-collection', 5]]) {
+  let savedPen;
+  for (const collection of ['premium-pens', 'grandfathers-collection']) {
     await page.mouse.move(0, 0);
-    await go(stationery + '/' + collection);
+    await go('/shop/kalam');
+    await page.locator('.kalam-tile[href$="/' + collection + '"]').click();
+    await page.waitForURL('**/shop/kalam/' + collection);
+    expect(await page.locator('.kalam-collection-photo .kalam-scene').evaluate(img => img.decode().then(() => img.naturalWidth > 0)),
+      'Collection hero image did not load');
     const shelf = page.locator('.pen-shelf');
     await shelf.waitFor();
     expect(await page.locator('.pen-rail-item[data-lifted="true"]').count() === 0, 'Pen rail hid pens before inspection');
@@ -289,10 +283,10 @@ async page => {
     await railItem.hover();
     await page.waitForFunction(() => [...document.querySelectorAll('.pen-rail-lamp')]
       .filter(lamp => getComputedStyle(lamp).opacity === '1').length === 1);
-    await page.locator('.pen-gallery h1').hover();
+    await page.locator('.kalam-collection-copy h1').hover();
     await page.waitForFunction(() => [...document.querySelectorAll('.pen-rail-lamp')]
       .every(lamp => getComputedStyle(lamp).opacity === '0'));
-    expect(await shelf.locator('.pen-shelf-item').count() === count, 'Pen shelf lost catalogue products');
+    expect(await shelf.locator('.pen-shelf-item').count() === 17, 'Pen shelf lost catalogue products');
     const item = shelf.locator('.pen-shelf-item').first();
     const penName = await item.locator('h3').textContent();
     const pen = item.getByRole('button', {name:`View ${penName}`, exact:true});
@@ -301,6 +295,7 @@ async page => {
     await inspector.waitFor();
     expect(await inspector.locator('.discount-badge').getAttribute('data-discount-band') !== null, 'Missing shared discount band');
     if (collection === 'premium-pens') {
+      savedPen = penName;
       await inspector.getByRole('button', {name:`Save ${penName}`, exact:true}).click();
       await inspector.getByRole('spinbutton', {name:'Quantity', exact:true}).fill('2');
       await inspector.getByRole('button', {name:'Add to cart', exact:true}).click();
@@ -309,12 +304,17 @@ async page => {
     await inspector.getByRole('button', {name:'← Back to pens', exact:true}).click();
     await inspector.waitFor({state:'detached'});
     await page.waitForFunction(() => document.activeElement?.classList.contains('pen-shelf-preview'));
+    if (collection === 'grandfathers-collection') {
+      await page.getByText('Representative portrait', {exact:true}).waitFor();
+    }
+    await page.locator('.kalam-back').click();
+    await page.waitForURL('**/shop/kalam');
   }
   await go('/shop/cart');
-  const penLine = page.locator('.cart-line').filter({hasText:'Lamy Dialog Palladium'});
+  const penLine = page.locator('.cart-line').filter({hasText:savedPen});
   expect(await penLine.locator('[data-quantity]').inputValue() === '2', 'Stationery cart lost selected quantity');
   await go('/shop/wishlist');
-  await page.locator('.cart-line').filter({hasText:'Lamy Dialog Palladium'}).waitFor();
+  await page.locator('.cart-line').filter({hasText:savedPen}).waitFor();
   await page.locator('footer').getByRole('link', {name:'Stationery', exact:true}).waitFor();
 
   await page.emulateMedia({reducedMotion:'reduce'});
@@ -339,5 +339,5 @@ async page => {
 
   await page.locator('.studio-render img').waitFor();
   expect(!issues.length, 'Browser errors: ' + issues.join(' | '));
-  return 'PASS: storefront browser workflows including stationery lamp, pen shelves, shared navigation, cart, wishlist and responsive layouts.';
+  return 'PASS: storefront browser workflows including Kalam lamps, pen shelves, shared navigation, cart, wishlist and responsive layouts.';
 }

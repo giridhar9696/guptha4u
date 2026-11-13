@@ -16,6 +16,9 @@
   display: inline-flex; min-height: 44px; align-items: center; position: relative;
   text-decoration: none; font: 400 clamp(18px, 1.7vw, 28px)/1.1 var(--font-display); white-space: nowrap;
 }
+.stationery-nav a[data-department-switch="kalam"] {
+  width: clamp(62px, 6vw, 91px);
+}
 .stationery-nav a[aria-current]::after, .stationery-nav a:hover::after {
   content: ""; position: absolute; inset: auto 0 0; height: 2px; background: #9e6b2c;
 }
@@ -73,7 +76,7 @@
 }
 
 .stationery-hero {
-  position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 1672 / 790;
+  position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 1187 / 560;
   color: #fff2de; background: #2e1b11;
   --stationery-ease: cubic-bezier(.22,.85,.22,1);
 }
@@ -115,17 +118,13 @@
 .stationery-objects { position: absolute; inset: 0; z-index: 2; transition: opacity 230ms ease; }
 .stationery-hero[data-group]:not([data-group=""]) .stationery-objects { opacity: 0; visibility: hidden; }
 .stationery-object {
-  position: absolute; top: 45%; height: 44%; left: var(--item-x); transform: translateX(-50%);
-  width: 11.35%; color: #21150d; text-decoration: none; border-radius: 14px;
+  position: absolute; top: 43%; height: 54%; left: var(--item-x); transform: translateX(-50%);
+  width: 16%; color: #21150d; text-decoration: none; border-radius: 14px;
 }
 .stationery-object > span {
-  position: absolute; inset: 79% 1px auto; text-align: center; text-wrap: balance;
+  position: absolute; inset: 86% 1px auto; text-align: center; text-wrap: balance;
   font: 400 clamp(12px, 1.24vw, 23px)/1.05 var(--font-display); text-transform: uppercase;
   text-shadow: 0 0 6px #f5d9b6cc;
-}
-.stationery-object[data-full-navigation] > span {
-  font: 600 clamp(16px, 1.75vw, 28px)/.97 "Cormorant Garamond", Georgia, serif;
-  color: #25180c; text-transform: none; text-shadow: 0 0 8px #ffe9b2;
 }
 .stationery-object:focus-visible { outline-color: #fff0cc; }
 .stationery-thumb, .stationery-selected { display: none; }
@@ -138,20 +137,6 @@
 }
 .stationery-lift.is-active .stationery-base-glow,
 .stationery-object:is(:hover, :focus-visible) .stationery-base-glow { opacity: 1; }
-.stationery-pen-light { fill: url("#stationery-reflection"); mix-blend-mode: screen; }
-.stationery-pendant {
-  transform: translateX(var(--lamp-x, 1297px)); transition: transform 520ms var(--stationery-ease); pointer-events: none;
-}
-.stationery-pendant-travel {
-  transform: translateY(-340px); opacity: 0;
-  transition: transform 590ms var(--stationery-ease), opacity 230ms ease 110ms;
-}
-.stationery-pendant.is-lit .stationery-pendant-travel { transform: none; opacity: 1; transition-delay: 0ms; }
-.stationery-pendant-beam {
-  fill: url("#stationery-beam"); filter: blur(13px); opacity: 0;
-  transition: opacity 300ms ease;
-}
-.stationery-pendant.is-lit .stationery-pendant-beam { opacity: .6; transition-delay: 170ms; }
 .stationery-cutout {
   opacity: 0; transform-box: view-box;
   transition: transform 560ms var(--stationery-ease), opacity 120ms 550ms;
@@ -165,7 +150,6 @@
 .stationery-section-title { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 22px; }
 .stationery-section-title .stationery-kicker, .stationery-section-title > span { color: var(--color-secondary-on-muted); }
 .stationery-section-title h2 { margin-top: 5px; }
-.stationery-home-premium .stationery-products { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .stationery-brands {
   background: linear-gradient(90deg, #15151526, #141414bc 30%, #141414bc 70%, #15151526),
     #202020 url('/storefront/stationery/pen-brands.webp') center / cover no-repeat;
@@ -238,8 +222,6 @@
   font: 400 clamp(16px, 1.18vw, 18px)/1.85 var(--font-body);
 }
 .grandfather-story-copy > p + p { margin-top: 16px; }
-.pen-gallery .pen-gallery-back { position: absolute; top: 18px; left: var(--gutter); color: inherit; }
-.pen-gallery .pen-gallery-back:hover { color: #2c2117; background: #fff2df; }
 .pen-shelf {
   background: radial-gradient(ellipse at 50% 0, #fffdf7, #f0e6d7 88%); padding-block: clamp(35px, 6vw, 85px);
   scroll-margin-top: 148px;
@@ -283,8 +265,6 @@
   .pen-shelf-row[data-count="1"] { grid-template-columns: minmax(0, 1fr); }
   .pen-shelf-row::before { display: none; }
   .pen-shelf-preview { border-bottom: 10px solid #dfcdb3; box-shadow: 0 12px 16px -14px #46312490; }
-  .pen-gallery .pen-gallery-back { position: static; margin-bottom: 10px; }
-  .stationery-home-premium .stationery-products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stationery-section-title { flex-wrap: wrap; }
 }
 .stationery-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
@@ -532,7 +512,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .stationery-camera, .stationery-copy, .stationery-objects, .stationery-hero::before,
-  .stationery-base-glow, .stationery-pendant, .stationery-pendant-travel, .stationery-pendant-beam,
+  .stationery-base-glow,
   .stationery-cutout, .stationery-product, .pen-shelf-preview { transition: none; }
   .stationery-lift.is-active .stationery-cutout, .stationery-product:hover, .pen-shelf-preview:hover { transform: none; }
 }
